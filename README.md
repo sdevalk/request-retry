@@ -26,7 +26,6 @@ Usage
 Example 1
 ------------
 ```javascript
-
 const RequestRetry = require('request-retry');
 const Wreck = require('wreck'); // Or your HTTP client library of choice
 
@@ -48,7 +47,6 @@ const Wreck = require('wreck'); // Or your HTTP client library of choice
 Example 2
 ------------
 ```javascript
-
 const RequestRetry = require('request-retry');
 const Wreck = require('wreck'); // Or your HTTP client library of choice
 
