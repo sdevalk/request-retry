@@ -1,0 +1,31 @@
+{
+  "name": "request-retry",
+  "version": "1.0.0",
+  "description": "request-retry",
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "private": true,
+  "license": "BSD-3-Clause",
+  "main": "lib/index.js",
+  "repository": "git://github.com/sdevalk/request-retry.git",
+  "scripts": {
+    "lint": "lab -d -f -L",
+    "test": "lab -L -a code -t 100",
+    "test-cov-html": "lab -a code -r html -o coverage.html"
+  },
+  "dependencies": {
+    "hoek": "5.0.4",
+    "joi": "13.6.0",
+    "p-retry": "2.0.0"
+  },
+  "devDependencies": {
+    "axios": "0.18.0",
+    "boom": "7.2.0",
+    "code": "5.2.0",
+    "lab": "15.5.0",
+    "request": "2.88.0",
+    "request-promise-native": "1.0.5",
+    "wreck": "14.0.2"
+  }
+}
