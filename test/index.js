@@ -126,6 +126,26 @@ describe('RequestRetry', { timeout: 10000 }, () => {
             expect(error.message).to.equal('"value" must be a Function');
         });
 
+        it('does not retry if number of retries is 0', async () => {
+
+            let callCount = 0;
+            let retryCount = 0;
+
+            const options = { numberOfRetries: 0 };
+            const retry = new RequestRetry(options);
+            retry.events.on('retry', () => retryCount++);
+
+            const fn = () => {
+
+                callCount++;
+                throw Boom.badImplementation();
+            };
+
+            await expect(retry.run(fn)).to.reject();
+            expect(callCount).to.equal(1);
+            expect(retryCount).to.equal(0);
+        });
+
         it('does not retry if error is not a real error', async () => {
 
             let callCount = 0;
