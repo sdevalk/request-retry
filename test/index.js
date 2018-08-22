@@ -312,6 +312,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
             expect(callCount).to.equal(3);
             expect(retryCount).to.equal(2);
             expect(timer.elapsed()).to.be.between(3000, 4000);
+
+            server.close();
         });
 
         it('retries with custom HTTP error code', async () => {
@@ -344,6 +346,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
             expect(callCount).to.equal(3);
             expect(retryCount).to.equal(2);
             expect(timer.elapsed()).to.be.between(3000, 4000);
+
+            server.close();
         });
 
         describe('error response properties', () => {
@@ -392,6 +396,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is HTTP error with property "statusCode"', async () => {
@@ -423,6 +429,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is HTTP error with property "output.statusCode"', async () => {
@@ -454,6 +462,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is HTTP error with property "response.status"', async () => {
@@ -485,6 +495,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
         });
 
@@ -522,6 +534,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is a ECONNREFUSED', async () => {
@@ -552,6 +566,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is a ENOTFOUND', async () => {
@@ -581,6 +597,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is a ESOCKETTIMEDOUT', async () => {
@@ -622,6 +640,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                server.close();
             });
 
             it('retries if error is a ETIMEDOUT', async () => {
@@ -669,6 +689,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                 expect(callCount).to.equal(3);
                 expect(retryCount).to.equal(2);
                 expect(timer.elapsed()).to.be.between(6000, 7000);
+
+                server.close();
             });
         });
 
@@ -705,6 +727,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                     expect(callCount).to.equal(3);
                     expect(retryCount).to.equal(2);
                     expect(timer.elapsed()).to.be.between(3000, 4000);
+
+                    server.close();
                 });
             };
 
@@ -751,6 +775,8 @@ describe('RequestRetry', { timeout: 10000 }, () => {
                     expect(callCount).to.equal(1);
                     expect(retryCount).to.equal(0);
                     expect(timer.elapsed()).to.be.below(100);
+
+                    server.close();
                 });
             };
 
