@@ -23,9 +23,9 @@
     "axios": "0.18.0",
     "boom": "7.2.0",
     "code": "5.2.0",
-    "lab": "15.5.0",
+    "lab": "16.0.0",
     "request": "2.88.0",
     "request-promise-native": "1.0.5",
-    "wreck": "14.0.2"
+    "wreck": "14.1.0"
   }
 }
