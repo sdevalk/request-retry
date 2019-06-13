@@ -1,30 +1,23 @@
 Promise-driven HTTP request wrapper with retry strategy
 ==============================
 
-Development
-==============================
+## Development
 
-Build image
-------------
+### Build image
     docker-compose build --no-cache
 
-Logon to container
-------------
+### Logon to container
     docker-compose run --rm node /bin/bash
 
-Run tests
-------------
+### Run tests
     npm test
 
-Coding conventions
-------------
-    https://hapijs.com/styleguide
+### Coding conventions
+https://hapijs.com/styleguide
 
-Usage
-==============================
+## Usage
 
-Example 1
-------------
+### Example 1
 ```javascript
 const RequestRetry = require('request-retry');
 const Wreck = require('wreck'); // Or your HTTP client library of choice
@@ -38,14 +31,13 @@ const Wreck = require('wreck'); // Or your HTTP client library of choice
     };
 
     const retry = new RequestRetry();
-    retry.events.on('retry', (data) => console.log('Retry attempt: ' + data.attemptNumber));
+    retry.events.on('failedAttempt', (data) => console.log('Failed attempt: ' + data.attemptNumber));
 
     await retry.run(yourRegularFunc); // Makes 3 calls, then rejects with a timeout error
 })();
 ```
 
-Example 2
-------------
+### Example 2
 ```javascript
 const RequestRetry = require('request-retry');
 const Wreck = require('wreck'); // Or your HTTP client library of choice
@@ -62,7 +54,7 @@ const Wreck = require('wreck'); // Or your HTTP client library of choice
         waitBetweenFirstRetryInMilliseconds: 2000
     };
     const retry = new RequestRetry(options);
-    retry.events.on('retry', (data) => console.log('Retry attempt: ' + data.attemptNumber));
+    retry.events.on('failedAttempt', (data) => console.log('Failed attempt: ' + data.attemptNumber));
 
     await retry.run(yourRegularFunc); // Makes 5 calls, then rejects with a Bad Gateway error
 })();
