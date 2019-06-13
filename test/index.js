@@ -1,15 +1,15 @@
 'use strict';
 
 const Axios = require('axios');
-const Boom = require('boom');
-const Code = require('code');
-const Hoek = require('hoek');
+const Boom = require('@hapi/boom');
+const Code = require('@hapi/code');
+const Hoek = require('@hapi/hoek');
 const Http = require('http');
 const Https = require('https');
-const Lab = require('lab');
+const Lab = require('@hapi/lab');
 const Request = require('request-promise-native');
 const RequestRetry = require('..');
-const Wreck = require('wreck');
+const Wreck = require('@hapi/wreck');
 
 const internals = {};
 const { describe, it } = exports.lab = Lab.script();
@@ -128,158 +128,136 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
         it('does not retry if number of retries is 0', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
 
             const options = { numberOfRetries: 0 };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject();
-            expect(callCount).to.equal(1);
-            expect(retryCount).to.equal(0);
+            expect(failedAttemptCount).to.equal(1);
         });
 
         it('does not retry if error is not a real error', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
 
             const retry = new RequestRetry();
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw { a: 'b' };
             };
 
             await expect(retry.run(fn)).to.reject();
-            expect(callCount).to.equal(1);
-            expect(retryCount).to.equal(0);
+            expect(failedAttemptCount).to.equal(0);
         });
 
         it('does not retry if error is not a network or HTTP error', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
 
             const retry = new RequestRetry();
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw new Error('Bad');
             };
 
             await expect(retry.run(fn)).to.reject(Error, 'Bad');
-            expect(callCount).to.equal(1);
-            expect(retryCount).to.equal(0);
+            expect(failedAttemptCount).to.equal(0);
         });
 
         it('retries default times with default wait', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const retry = new RequestRetry();
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject(Error);
-            expect(callCount).to.equal(3);
-            expect(retryCount).to.equal(2);
+            expect(failedAttemptCount).to.equal(3);
             expect(timer.elapsed()).to.be.between(3000, 4000);
         });
 
         it('retries custom times with default wait', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const options = { numberOfRetries: 3 };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject(Error);
-            expect(callCount).to.equal(4);
-            expect(retryCount).to.equal(3);
+            expect(failedAttemptCount).to.equal(4);
             expect(timer.elapsed()).to.be.between(7000, 8000);
         });
 
         it('retries default times with custom wait', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const options = { waitBetweenFirstRetryInMilliseconds: 100 };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject(Error);
-            expect(callCount).to.equal(3);
-            expect(retryCount).to.equal(2);
+            expect(failedAttemptCount).to.equal(3);
             expect(timer.elapsed()).to.be.between(300, 400);
         });
 
         it('retries custom times with custom wait', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const options = { numberOfRetries: 1, waitBetweenFirstRetryInMilliseconds: 50 };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject(Error);
-            expect(callCount).to.equal(2);
-            expect(retryCount).to.equal(1);
+            expect(failedAttemptCount).to.equal(2);
             expect(timer.elapsed()).to.be.between(50, 60);
         });
 
         it('retries with custom network error code', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const options = { retryNetworkErrorCodes: ['EPROTO'] };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const handler = (request, response) => {
 
@@ -291,7 +269,6 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             const fn = () => {
 
-                callCount++;
                 const reqOptions = {
                     protocol: 'https:',
                     port: server.address().port,
@@ -309,8 +286,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             const error = await expect(retry.run(fn)).to.reject(Error);
             expect(error.code).to.equal('EPROTO');
-            expect(callCount).to.equal(3);
-            expect(retryCount).to.equal(2);
+            expect(failedAttemptCount).to.equal(3);
             expect(timer.elapsed()).to.be.between(3000, 4000);
 
             server.close();
@@ -318,13 +294,12 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
         it('retries with custom HTTP error code', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const options = { retryHttpErrorCodes: [400] };
             const retry = new RequestRetry(options);
-            retry.events.on('retry', () => retryCount++);
+            retry.events.on('failedAttempt', () => failedAttemptCount++);
 
             const handler = (request, response) => {
 
@@ -336,15 +311,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             const fn = async () => {
 
-                callCount++;
                 const baseUrl = 'http://localhost:' + server.address().port;
                 await Wreck.get(baseUrl);
             };
 
             const error = await expect(retry.run(fn)).to.reject(Error);
             expect(error.output.statusCode).to.equal(400);
-            expect(callCount).to.equal(3);
-            expect(retryCount).to.equal(2);
+            expect(failedAttemptCount).to.equal(3);
             expect(timer.elapsed()).to.be.between(3000, 4000);
 
             server.close();
@@ -354,12 +327,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is HTTP error with property "code"', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -371,7 +343,6 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: server.address().port,
                         hostname: 'localhost'
@@ -393,8 +364,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal(500);
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -402,12 +372,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is HTTP error with property "statusCode"', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -419,15 +388,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = async () => {
 
-                    callCount++;
                     const baseUrl = 'http://localhost:' + server.address().port;
                     await Request(baseUrl);
                 };
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.statusCode).to.equal(500);
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -435,12 +402,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is HTTP error with property "output.statusCode"', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -452,15 +418,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = async () => {
 
-                    callCount++;
                     const baseUrl = 'http://localhost:' + server.address().port;
                     await Wreck.get(baseUrl);
                 };
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.output.statusCode).to.equal(500);
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -468,12 +432,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is HTTP error with property "response.status"', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -485,15 +448,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = async () => {
 
-                    callCount++;
                     const baseUrl = 'http://localhost:' + server.address().port;
                     await Axios.get(baseUrl);
                 };
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.response.status).to.equal(500);
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -504,12 +465,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is a ECONNRESET', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -520,7 +480,6 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = async () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: server.address().port,
                         hostname: 'localhost'
@@ -531,8 +490,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal('ECONNRESET');
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -540,19 +498,17 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is a ECONNREFUSED', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const server = await internals.getServer(() => {});
                 const unknownPort = server.address().port + 1;
 
                 const fn = async () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: unknownPort,
                         hostname: 'localhost'
@@ -563,8 +519,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal('ECONNREFUSED');
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -572,18 +527,16 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is a ENOTFOUND', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const server = await internals.getServer(() => {});
 
                 const fn = async () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: server.address().port,
                         hostname: 'unknownHost'
@@ -594,8 +547,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal('ENOTFOUND');
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -603,18 +555,16 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is a ESOCKETTIMEDOUT', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const server = await internals.getServer(() => {});
 
                 const fn = () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: server.address().port,
                         hostname: 'localhost'
@@ -637,8 +587,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal('ESOCKETTIMEDOUT');
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(3000, 4000);
 
                 server.close();
@@ -646,12 +595,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
             it('retries if error is a ETIMEDOUT', async () => {
 
-                let callCount = 0;
-                let retryCount = 0;
+                let failedAttemptCount = 0;
                 const timer = new Hoek.Bench();
 
                 const retry = new RequestRetry();
-                retry.events.on('retry', () => retryCount++);
+                retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                 const handler = (request, response) => {
 
@@ -662,7 +610,6 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const fn = () => {
 
-                    callCount++;
                     const reqOptions = {
                         port: server.address().port,
                         hostname: 'localhost'
@@ -686,8 +633,7 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 const error = await expect(retry.run(fn)).to.reject(Error);
                 expect(error.code).to.equal('ETIMEDOUT');
-                expect(callCount).to.equal(3);
-                expect(retryCount).to.equal(2);
+                expect(failedAttemptCount).to.equal(3);
                 expect(timer.elapsed()).to.be.between(6000, 7000);
 
                 server.close();
@@ -700,12 +646,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 it('retries default times if error is HTTP error in default range', async () => {
 
-                    let callCount = 0;
-                    let retryCount = 0;
+                    let failedAttemptCount = 0;
                     const timer = new Hoek.Bench();
 
                     const retry = new RequestRetry();
-                    retry.events.on('retry', () => retryCount++);
+                    retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                     const handler = (request, response) => {
 
@@ -717,15 +662,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                     const fn = async () => {
 
-                        callCount++;
                         const baseUrl = 'http://localhost:' + server.address().port;
                         await Wreck.get(baseUrl);
                     };
 
                     const error = await expect(retry.run(fn)).to.reject(Error);
                     expect(error.output.statusCode).to.equal(provider.errorCode);
-                    expect(callCount).to.equal(3);
-                    expect(retryCount).to.equal(2);
+                    expect(failedAttemptCount).to.equal(3);
                     expect(timer.elapsed()).to.be.between(3000, 4000);
 
                     server.close();
@@ -748,12 +691,11 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                 it('does not retry if error is HTTP error not in default range', async () => {
 
-                    let callCount = 0;
-                    let retryCount = 0;
+                    let failedAttemptCount = 0;
                     const timer = new Hoek.Bench();
 
                     const retry = new RequestRetry();
-                    retry.events.on('retry', () => retryCount++);
+                    retry.events.on('failedAttempt', () => failedAttemptCount++);
 
                     const handler = (request, response) => {
 
@@ -765,15 +707,13 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
                     const fn = async () => {
 
-                        callCount++;
                         const baseUrl = 'http://localhost:' + server.address().port;
                         await Wreck.get(baseUrl);
                     };
 
                     const error = await expect(retry.run(fn)).to.reject(Error);
                     expect(error.output.statusCode).to.equal(provider.errorCode);
-                    expect(callCount).to.equal(1);
-                    expect(retryCount).to.equal(0);
+                    expect(failedAttemptCount).to.equal(0);
                     expect(timer.elapsed()).to.be.below(100);
 
                     server.close();
@@ -788,27 +728,24 @@ describe('RequestRetry', { timeout: 10000 }, () => {
 
         it('retries and returns data on retry event', async () => {
 
-            let callCount = 0;
-            let retryCount = 0;
+            let failedAttemptCount = 0;
             const timer = new Hoek.Bench();
 
             const retry = new RequestRetry();
-            retry.events.on('retry', (data) => {
+            retry.events.on('failedAttempt', (data) => {
 
-                retryCount++;
-                expect(data.attemptNumber).to.equal(retryCount);
-                expect(data.attemptsLeft).to.equal(2 - retryCount);
+                failedAttemptCount++;
+                expect(data.attemptNumber).to.equal(failedAttemptCount);
+                expect(data.retriesLeft).to.equal(3 - failedAttemptCount);
             });
 
             const fn = () => {
 
-                callCount++;
                 throw Boom.badImplementation();
             };
 
             await expect(retry.run(fn)).to.reject(Error);
-            expect(callCount).to.equal(3);
-            expect(retryCount).to.equal(2);
+            expect(failedAttemptCount).to.equal(3);
             expect(timer.elapsed()).to.be.between(3000, 4000);
         });
     });
