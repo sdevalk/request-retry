@@ -20,7 +20,7 @@
     "p-retry": "4.1.0"
   },
   "devDependencies": {
-    "axios": "0.19.0",
+    "axios": "1.6.0",
     "@hapi/boom": "7.4.2",
     "@hapi/code": "5.3.1",
     "@hapi/lab": "18.1.2",
